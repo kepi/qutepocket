@@ -20,7 +20,7 @@ import os
 from pocket import Pocket, PocketAutException, PocketException
 
 CONSUMER_KEY = "70250-26f8e47a9dba2989767f4512"
-REDIRECT_URI = "https://github.com/kepi/qutepocket"
+REDIRECT_URI = "https://github.com/kepi/qutepocket/wiki/Authorized"
 
 SECRET = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.secrets'
 REQUEST = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.request'
@@ -74,14 +74,27 @@ def get_access_token():
         exit(12)
 
 
+def reauthorize():
+    command('message-warning "Invalid secret token, trying to reauthorize."')
+    if os.path.isfile(SECRET):
+        os.remove(SECRET)
+
+    get_request_token()
+
+
 def add():
     try:
         pocket.add(os.environ['QUTE_URL'], os.environ['QUTE_TITLE'])
         command('message-info "Great, page is in your Pocket."')
 
     except PocketException as e:
-        command('message-warning "Error while Pocketing the page: %s"'
-                % e.message)
+        # secret token e
+        if e.error_code == 107:
+            reauthorize()
+
+        else:
+            command('message-warning "Error while Pocketing the page: %s %s"'
+                    % (e.message, e.error_code))
 
 
 if not os.path.isfile(SECRET):
