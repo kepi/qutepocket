@@ -20,7 +20,7 @@ import os
 from pocket import Pocket, PocketAutException, PocketException
 
 CONSUMER_KEY = "70250-26f8e47a9dba2989767f4512"
-REDIRECT_URI = "http://www.google.com"
+REDIRECT_URI = "https://github.com/kepi/qutepocket"
 
 SECRET = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.secrets'
 REQUEST = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.request'
@@ -29,7 +29,7 @@ FIFO = open(os.environ['QUTE_FIFO'], 'w')
 
 
 def command(command):
-    FIFO.write(command)
+    FIFO.write(command + "\n")
 
 
 def get_request_token():
@@ -41,17 +41,17 @@ def get_request_token():
     with open(REQUEST, 'w') as request_file:
         request_file.write(request_token)
 
-    auth_url = ("http://getpocket.com/auth/authorize"
+    auth_url = ("https://getpocket.com/auth/authorize"
                 "?request_token={0}"
                 "&redirect_uri={1}"
                 ).format(request_token, REDIRECT_URI)
 
-    with open(os.environ['QUTE_FIFO'], 'w') as fifo:
-        msg = ("Accept access, close opened page and use "
-               "Save to Pocket command again.")
+    msg = ("Accept access, close opened page and use "
+           "Save to Pocket command again.")
 
-        fifo.write('open -t %s' % auth_url)
-        fifo.write('message-info "%s"' % msg)
+    command('open -t %s' % auth_url)
+    command('message-info "%s"' % msg)
+    exit(0)
 
 
 def get_access_token():
@@ -66,8 +66,7 @@ def get_access_token():
             os.remove(REQUEST)
 
             msg = "Congratulation, qutepocket is authorized now :)"
-            with open(os.environ['QUTE_FIFO'], 'w') as fifo:
-                fifo.write('message-info "%s"' % msg)
+            command('message-info "%s"' % msg)
 
     except PocketAutException:
         os.remove(REQUEST)
@@ -78,10 +77,11 @@ def get_access_token():
 def add():
     try:
         pocket.add(os.environ['QUTE_URL'], os.environ['QUTE_TITLE'])
-        FIFO.write('message-info "Great, page is in pocket"')
+        command('message-info "Great, page is in your Pocket."')
 
-    except PocketException:
-        FIFO.write('message-warning "Error while saving page to pocket"')
+    except PocketException as e:
+        command('message-warning "Error while Pocketing the page: %s"'
+                % e.message)
 
 
 if not os.path.isfile(SECRET):
@@ -92,7 +92,6 @@ if not os.path.isfile(SECRET):
         get_access_token()
     else:
         get_request_token()
-        exit(13)
 
 with open(SECRET) as secrets_file:
     access_token = secrets_file.read()
