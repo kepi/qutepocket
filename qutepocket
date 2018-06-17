@@ -15,25 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with qutebrowser.  If not, see <http://www.gnu.org/licenses/>.
 
-from pocket import (
-    Pocket,
-    PocketException,
-    PocketAutException
-)
-
 import os
-import yaml
 
-CONSUMER_KEY="70250-26f8e47a9dba2989767f4512"
-REDIRECT_URI="http://www.google.com"
+from pocket import Pocket, PocketAutException, PocketException
 
-SECRET  = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.secrets'
+CONSUMER_KEY = "70250-26f8e47a9dba2989767f4512"
+REDIRECT_URI = "http://www.google.com"
+
+SECRET = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.secrets'
 REQUEST = os.environ['QUTE_CONFIG_DIR'] + '/qutepocket.request'
 
-FIFO    = open(os.environ['QUTE_FIFO'], 'w')
+FIFO = open(os.environ['QUTE_FIFO'], 'w')
+
 
 def command(command):
     FIFO.write(command)
+
 
 def get_request_token():
     request_token = pocket.get_request_token(REDIRECT_URI)
@@ -44,17 +41,23 @@ def get_request_token():
     with open(REQUEST, 'w') as request_file:
         request_file.write(request_token)
 
-    auth_url = 'http://getpocket.com/auth/authorize?request_token={0}&redirect_uri={1}'.format(request_token, REDIRECT_URI)
+    auth_url = ("http://getpocket.com/auth/authorize"
+                "?request_token={0}"
+                "&redirect_uri={1}"
+                ).format(request_token, REDIRECT_URI)
 
     with open(os.environ['QUTE_FIFO'], 'w') as fifo:
+        msg = ("Accept access, close opened page and use "
+               "Save to Pocket command again.")
+
         fifo.write('open -t %s' % auth_url)
-        fifo.write('message-info "After accepting access for qutepocket just close page which opens and use save to pocket command again"')
+        fifo.write('message-info "%s"' % msg)
 
 
 def get_access_token():
     try:
         with open(REQUEST) as request_file:
-            request_token=request_file.read()
+            request_token = request_file.read()
 
         access_token = pocket.get_access_token(request_token)
         print(access_token)
@@ -62,10 +65,11 @@ def get_access_token():
             request_file.write(access_token)
             os.remove(REQUEST)
 
+            msg = "Congratulation, qutepocket is authorized now :)"
             with open(os.environ['QUTE_FIFO'], 'w') as fifo:
-                fifo.write('message-info "Congratulation, qutepocket is authorized now :)"')
+                fifo.write('message-info "%s"' % msg)
 
-    except:
+    except PocketAutException:
         os.remove(REQUEST)
         get_request_token()
         exit(12)
@@ -73,13 +77,15 @@ def get_access_token():
 
 def add():
     try:
-        ok = pocket.add(os.environ['QUTE_URL'], os.environ['QUTE_TITLE'])
+        pocket.add(os.environ['QUTE_URL'], os.environ['QUTE_TITLE'])
         FIFO.write('message-info "Great, page is in pocket"')
-    except:
+
+    except PocketException:
         FIFO.write('message-warning "Error while saving page to pocket"')
 
+
 if not os.path.isfile(SECRET):
-    access_token=""
+    access_token = ""
     pocket = Pocket(CONSUMER_KEY, access_token)
 
     if os.path.isfile(REQUEST):
@@ -89,9 +95,8 @@ if not os.path.isfile(SECRET):
         exit(13)
 
 with open(SECRET) as secrets_file:
-    access_token=secrets_file.read()
+    access_token = secrets_file.read()
     pocket = Pocket(CONSUMER_KEY, access_token)
     add()
-
 
 FIFO.close()
