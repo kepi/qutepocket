@@ -1,0 +1,32 @@
+* qutepocket
+
+[[http://qutebrowser.org/][qutebrowser]] user script to save pages into your [[https://getpocket.com/][Pocket]].
+
+** Installation
+
+1. install [[https://pypi.org/project/pocket-api/][pocket-api]] dependency with i.e. =pip3 install pocket-api --user=
+2. put =qutepocket= file into your /userscripts/ directory
+3. configure key bindings
+
+*** Tip
+
+If you are on Linux/Unix you can clone this git repository and symlink =qutepocket= script to your userscript directory.
+   
+** Key bindings
+
+To use this "extension" you need to setup some key binding. I'm using =s p= as / *S* ave to *P* ocket/
+
+*** Directly in qutebrowser
+#+BEGIN_SRC
+:bind sp spawn --userscript qutepocket
+#+END_SRC
+
+*** In your =config.py= file
+
+#+BEGIN_SRC 
+config.bind("sp", "spawn --userscript qutepocket")
+#+END_SRC
+
+** License
+
+GNU GENERAL PUBLIC LICENSE Version 3, see [[LICENSE][LICENSE]].
