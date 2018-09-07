@@ -17,7 +17,7 @@
 
 import os
 
-from pocket import Pocket, PocketAutException, PocketException
+from pocket import Pocket, AuthException, PocketException
 
 CONSUMER_KEY = "70250-26f8e47a9dba2989767f4512"
 REDIRECT_URI = "https://github.com/kepi/qutepocket/wiki/Authorized"
